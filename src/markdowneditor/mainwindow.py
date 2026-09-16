@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-from PySide6.QtCore import QDir, QFile, QIODevice, QUrl, Qt, Slot
+from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QUrl, Qt, Slot
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox
@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self._channel.registerObject("content", self.m_content)
         self._page.setWebChannel(self._channel)
 
-        self._ui.preview.setUrl(QUrl("qrc:/index.html"))
+        self._loadPreview()
 
         self._ui.actionNew.triggered.connect(self.onFileNew)
         self._ui.actionOpen.triggered.connect(self.onFileOpen)
@@ -47,6 +47,21 @@ class MainWindow(QMainWindow):
         defaultTextFile.open(QIODevice.OpenModeFlag.ReadOnly)
         data = defaultTextFile.readAll()
         self._ui.editor.setPlainText(data.data().decode('utf8'))
+
+    def _loadPreview(self):
+        """(Re)load the preview page so relative links resolve against the
+        open document's folder. With no file yet, keep the qrc: origin."""
+        if self.m_file_path:
+            folder = QFileInfo(self.m_file_path).absolutePath()
+            base = QUrl.fromLocalFile(folder + "/")
+            page = QFile(":/index.html")
+            page.open(QIODevice.OpenModeFlag.ReadOnly)
+            html = page.readAll().data().decode('utf8')
+            self._page.setBaseUrl(base)
+            self._page.setHtml(html, base)
+        else:
+            self._page.setBaseUrl(None)
+            self._ui.preview.setUrl(QUrl("qrc:/index.html"))
 
     @Slot()
     def plainTextEditChanged(self):
@@ -62,6 +77,7 @@ class MainWindow(QMainWindow):
                                 f"Could not open file {name}: {error}")
             return
         self.m_file_path = path
+        self._loadPreview()
         data = f.readAll()
         self._ui.editor.setPlainText(data.data().decode('utf8'))
         self.statusBar().showMessage(f"Opened {name}")
@@ -80,6 +96,7 @@ class MainWindow(QMainWindow):
         self.m_file_path = ''
         self._ui.editor.setPlainText("## New document")
         self._ui.editor.document().setModified(False)
+        self._loadPreview()
 
     @Slot()
     def onFileOpen(self):
@@ -127,6 +144,7 @@ class MainWindow(QMainWindow):
         path = dialog.selectedFiles()[0]
         self.m_file_path = path
         self.onFileSave()
+        self._loadPreview()
 
     def closeEvent(self, event):
         if self.isModified():
