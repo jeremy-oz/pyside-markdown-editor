@@ -9,5 +9,12 @@ dependencies = [
     "PySide6>=6.8",
 ]
 
-[tool.uv]
-package = false
+[project.scripts]
+markdown-editor = "markdowneditor.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.8,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "markdowneditor"

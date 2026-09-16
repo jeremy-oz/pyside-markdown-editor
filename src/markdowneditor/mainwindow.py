@@ -8,9 +8,9 @@ from PySide6.QtGui import QFontDatabase
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox
 
-from ui_mainwindow import Ui_MainWindow
-from document import Document
-from previewpage import PreviewPage
+from .ui_mainwindow import Ui_MainWindow
+from .document import Document
+from .previewpage import PreviewPage
 
 
 class MainWindow(QMainWindow):

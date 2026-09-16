@@ -10,21 +10,30 @@ verbatim (16 Sep 2026) from
 The upstream source lives in the `pyside-setup` monorepo at
 `examples/webenginewidgets/markdowneditor`; this repo exists so it can grow on its own.
 
-## Run
+## Install
 
-Python-only, managed with [uv](https://docs.astral.sh/uv/):
+Python-only, managed with [uv](https://docs.astral.sh/uv/). As a tool on your PATH:
 
 ```bash
-uv run main.py
+uv tool install git+ssh://git@git.kimichen.org:2222/neo/pyside-markdown-editor.git
+markdown-editor
+```
+
+Upgrade later with `uv tool upgrade pyside-markdown-editor`. From a checkout, for development:
+
+```bash
+uv run markdown-editor          # or: uv run -m markdowneditor
 ```
 
 The first run downloads PySide6 (Qt WebEngine is a large wheel, allow a few minutes).
 
 ## Layout
 
+Source is the `markdowneditor` package under `src/`.
+
 | File | Role |
 |---|---|
-| `main.py` | Entry point: creates the `QApplication` and shows the window |
+| `__main__.py` | Entry point (`main()`): creates the `QApplication` and shows the window |
 | `mainwindow.py` | Menu actions (New, Open, Save, Save As, Exit), dirty-state tracking, wires editor to preview |
 | `document.py` | `Document` QObject exposed to JavaScript over `QWebChannel`; emits `textChanged` |
 | `previewpage.py` | `QWebEnginePage` subclass that opens external links in the system browser |
@@ -36,6 +45,7 @@ The first run downloads PySide6 (Qt WebEngine is a large wheel, allow a few minu
 ## Regenerating generated files
 
 ```bash
+cd src/markdowneditor
 uv run pyside6-uic mainwindow.ui -o ui_mainwindow.py
 uv run pyside6-rcc resources/markdowneditor.qrc -o rc_markdowneditor.py
 ```
