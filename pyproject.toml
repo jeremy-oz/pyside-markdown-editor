@@ -9,6 +9,10 @@ dependencies = [
     "PySide6>=6.8",
 ]
 
+[project.urls]
+Homepage = "https://github.com/jeremy-oz/pyside-markdown-editor"
+Upstream = "https://doc.qt.io/qtforpython-6/examples/example_webenginewidgets_markdowneditor.html"
+
 [project.scripts]
 markdown-editor = "markdowneditor.__main__:main"
 

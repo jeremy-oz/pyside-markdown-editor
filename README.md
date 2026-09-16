@@ -15,7 +15,7 @@ The upstream source lives in the `pyside-setup` monorepo at
 Python-only, managed with [uv](https://docs.astral.sh/uv/). As a tool on your PATH:
 
 ```bash
-uv tool install git+ssh://git@git.kimichen.org:2222/neo/pyside-markdown-editor.git
+uv tool install git+https://github.com/jeremy-oz/pyside-markdown-editor.git
 markdown-editor
 ```
 
