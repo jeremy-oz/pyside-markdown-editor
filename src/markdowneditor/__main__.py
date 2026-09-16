@@ -16,6 +16,7 @@ from . import rc_markdowneditor  # noqa: F401
 def main() -> int:
     app = QApplication(sys.argv)
     QCoreApplication.setOrganizationName("QtExamples")
+    QCoreApplication.setApplicationName("markdowneditor")
     window = MainWindow()
     window.show()
     return app.exec()

@@ -27,6 +27,23 @@ uv run markdown-editor          # or: uv run -m markdowneditor
 
 The first run downloads PySide6 (Qt WebEngine is a large wheel, allow a few minutes).
 
+## Using it
+
+The window opens showing the rendered preview only. The Markdown source pane is hidden
+until you ask for it, so reading is the default and editing is one keystroke away.
+
+| Action | Where |
+|---|---|
+| Show or hide the Markdown source | View › Show Markdown source, `Ctrl+E` (`⌘E`), the **Source** button in the status bar, or right-click the preview |
+| Show or hide the file explorer | View › Show file explorer, `Ctrl+Shift+E`, or right-click the preview |
+| Open a file from the explorer | Double-click it (or press Enter); the tree shows folders and `*.md` / `*.markdown` files, rooted at the open document's folder |
+| Preferences | Edit › Preferences (`Ctrl+,`; on macOS under the app menu) |
+
+Preferences hold the launch state of the source pane and the maximum size images are
+shown at in the preview (a share of the pane width and a height in pixels; images scale
+down to fit, never up). Window layout, explorer visibility and the splitter position are
+remembered between runs in `QSettings` (`QtExamples` / `markdowneditor`).
+
 ## Layout
 
 Source is the `markdowneditor` package under `src/`.
@@ -34,7 +51,9 @@ Source is the `markdowneditor` package under `src/`.
 | File | Role |
 |---|---|
 | `__main__.py` | Entry point (`main()`): creates the `QApplication` and shows the window |
-| `mainwindow.py` | Menu actions (New, Open, Save, Save As, Exit), dirty-state tracking, wires editor to preview |
+| `mainwindow.py` | Menu actions, dirty-state tracking, source-pane toggle, wires editor, explorer and preview together |
+| `fileexplorer.py` | `FileExplorer` dock: a `QTreeView` over `QFileSystemModel`, filtered to Markdown files |
+| `preferences.py` | `Preferences` (QSettings-backed values) and the `PreferencesDialog` |
 | `document.py` | `Document` QObject exposed to JavaScript over `QWebChannel`; emits `textChanged` |
 | `previewpage.py` | `QWebEnginePage` subclass that opens external links in the system browser |
 | `mainwindow.ui` / `ui_mainwindow.py` | Qt Designer form and its generated Python |

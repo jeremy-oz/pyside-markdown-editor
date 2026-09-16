@@ -5,6 +5,15 @@
   <link rel="stylesheet" type="text/css" href="qrc:/3rdparty/markdown.css">
   <script src="qrc:/3rdparty/marked.js"></script>
   <script src="qrc:/qtwebchannel/qwebchannel.js"></script>
+  <style>
+    /* Image limits; the values are set from the Preferences dialog. */
+    #placeholder img {
+      max-width: var(--img-max-width, 100%);
+      max-height: var(--img-max-height, 600px);
+      width: auto;
+      height: auto;
+    }
+  </style>
 </head>
 <body>
   <div id="placeholder"></div>
