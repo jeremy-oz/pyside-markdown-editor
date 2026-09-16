@@ -164,6 +164,21 @@ class MainWindow(QMainWindow):
         return button == QMessageBox.StandardButton.Yes
 
     @Slot(str)
+    def openPath(self, path):
+        """Open a path given on the command line: a file is loaded, a folder
+        is browsed in the explorer."""
+        if QFileInfo(path).isDir():
+            self._explorer.setRoot(path)
+            self._explorer.show()
+            self._ui.editor.setPlainText(
+                f"## {QFileInfo(path).fileName()}\n\n"
+                "Choose a file in the explorer on the left to open it.")
+            self._ui.editor.document().setModified(False)
+            self.statusBar().showMessage(f"Browsing {QDir.toNativeSeparators(path)}")
+        else:
+            self.openFile(path)
+
+    @Slot(str)
     def openFile(self, path):
         f = QFile(path)
         name = QDir.toNativeSeparators(path)
