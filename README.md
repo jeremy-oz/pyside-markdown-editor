@@ -52,9 +52,10 @@ until you ask for it, so reading is the default and editing is one keystroke awa
 | Preferences | Edit › Preferences (`Ctrl+,`; on macOS under the app menu) |
 
 Preferences hold the explorer sort order (name or date modified, either direction;
-name A to Z by default), the launch state of the source pane, and the maximum size images are
-shown at in the preview (a share of the pane width and a height in pixels; images scale
-down to fit, never up). Window layout, explorer visibility and the splitter position are
+name A to Z by default), the launch state of the source pane, the preview text size, and the
+maximum size images are shown at in the preview (a share of the pane width and a height in
+pixels; images scale down to fit, never up). The preview follows the desktop light or dark
+setting. Window layout, explorer visibility and the splitter position are
 remembered between runs in `QSettings` (`QtExamples` / `markdowneditor`).
 
 ## Layout
@@ -71,7 +72,7 @@ Source is the `markdowneditor` package under `src/`.
 | `previewpage.py` | `QWebEnginePage` subclass that opens external links in the system browser |
 | `mainwindow.ui` / `ui_mainwindow.py` | Qt Designer form and its generated Python |
 | `resources/` | `index.html` preview page, `default.md`, and the `.qrc` resource file |
-| `resources/3rdparty/` | `marked.js` 0.4.0 (MIT) and `markdown.css` (Apache-2.0) |
+| `resources/3rdparty/` | `marked.js` 0.4.0 (MIT) and github-markdown-css 5.9.0, light and dark (MIT) |
 | `rc_markdowneditor.py` | Generated resource module. Regenerate after editing `resources/` |
 
 ## Regenerating generated files

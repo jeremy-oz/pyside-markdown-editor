@@ -2,7 +2,8 @@
     <qresource prefix="/">
         <file>default.md</file>
         <file>index.html</file>
-        <file>3rdparty/markdown.css</file>
+        <file>3rdparty/github-markdown-light.css</file>
+        <file>3rdparty/github-markdown-dark.css</file>
         <file>3rdparty/marked.js</file>
     </qresource>
 </RCC>

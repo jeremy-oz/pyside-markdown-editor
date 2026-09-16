@@ -26,6 +26,7 @@ class Preferences:
     show_source: bool = False
     image_max_width: int = 100   # percent of the preview width
     image_max_height: int = 600  # pixels, 0 = unlimited
+    base_font_size: int = 16     # pixels; the preview scales from this
     explorer_sort: str = DEFAULT_SORT  # one of the SORT_ORDERS values
 
     @classmethod
@@ -35,6 +36,7 @@ class Preferences:
             show_source=s.value("view/showSource", cls.show_source, type=bool),
             image_max_width=s.value("preview/imageMaxWidth", cls.image_max_width, type=int),
             image_max_height=s.value("preview/imageMaxHeight", cls.image_max_height, type=int),
+            base_font_size=s.value("preview/baseFontSize", cls.base_font_size, type=int),
             explorer_sort=s.value("explorer/sort", cls.explorer_sort, type=str),
         )
 
@@ -43,14 +45,18 @@ class Preferences:
         s.setValue("view/showSource", self.show_source)
         s.setValue("preview/imageMaxWidth", self.image_max_width)
         s.setValue("preview/imageMaxHeight", self.image_max_height)
+        s.setValue("preview/baseFontSize", self.base_font_size)
         s.setValue("explorer/sort", self.explorer_sort)
 
-    def image_style_script(self) -> str:
-        """JavaScript that pushes the image limits into the preview page."""
+    def preview_style_script(self) -> str:
+        """JavaScript that pushes the image limits and the base font size
+        into the preview page."""
         width = f"{self.image_max_width}%"
         height = f"{self.image_max_height}px" if self.image_max_height > 0 else "none"
         return (f"document.documentElement.style.setProperty('--img-max-width', '{width}');"
-                f"document.documentElement.style.setProperty('--img-max-height', '{height}');")
+                f"document.documentElement.style.setProperty('--img-max-height', '{height}');"
+                f"document.documentElement.style.setProperty('--base-font-size',"
+                f" '{self.base_font_size}px');")
 
 
 class PreferencesDialog(QDialog):
@@ -76,6 +82,12 @@ class PreferencesDialog(QDialog):
         self._image_height.setValue(prefs.image_max_height)
         self._image_height.setToolTip("Images taller than this are scaled down; 0 for no limit")
 
+        self._font_size = QSpinBox()
+        self._font_size.setRange(10, 32)
+        self._font_size.setSuffix(" px")
+        self._font_size.setValue(prefs.base_font_size)
+        self._font_size.setToolTip("Body text size in the preview; headings scale with it")
+
         self._sort = QComboBox()
         for value, label, _column, _order in SORT_ORDERS:
             self._sort.addItem(label, value)
@@ -85,6 +97,7 @@ class PreferencesDialog(QDialog):
 
         form = QFormLayout()
         form.addRow(self._show_source)
+        form.addRow("Preview text size:", self._font_size)
         form.addRow("Maximum image width:", self._image_width)
         form.addRow("Maximum image height:", self._image_height)
         form.addRow("Sort files by:", self._sort)
@@ -103,5 +116,6 @@ class PreferencesDialog(QDialog):
             show_source=self._show_source.isChecked(),
             image_max_width=self._image_width.value(),
             image_max_height=self._image_height.value(),
+            base_font_size=self._font_size.value(),
             explorer_sort=self._sort.currentData(),
         )
