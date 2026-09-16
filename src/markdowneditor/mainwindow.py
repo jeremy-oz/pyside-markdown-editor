@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 
-from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QUrl, Qt, Slot
-from PySide6.QtGui import QFontDatabase
+from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QSettings, QUrl, Qt, Slot
+from PySide6.QtGui import QFontDatabase, QKeySequence
 from PySide6.QtWebChannel import QWebChannel
-from PySide6.QtWidgets import QDialog, QFileDialog, QMainWindow, QMessageBox
+from PySide6.QtWebEngineCore import QWebEnginePage
+from PySide6.QtWidgets import (QDialog, QFileDialog, QMainWindow, QMessageBox,
+                               QToolButton)
 
 from .ui_mainwindow import Ui_MainWindow
 from .document import Document
+from .fileexplorer import FileExplorer
+from .preferences import Preferences, PreferencesDialog
 from .previewpage import PreviewPage
 
 
@@ -19,13 +23,14 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.m_file_path = ''
         self.m_content = Document()
+        self._prefs = Preferences.load()
         self._ui = Ui_MainWindow()
         self._ui.setupUi(self)
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         self._ui.editor.setFont(font)
-        self._ui.preview.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self._page = PreviewPage(self)
         self._ui.preview.setPage(self._page)
+        self._page.loadFinished.connect(self._applyPreviewStyle)
 
         self._ui.editor.textChanged.connect(self.plainTextEditChanged)
 
@@ -43,10 +48,87 @@ class MainWindow(QMainWindow):
 
         self._ui.editor.document().modificationChanged.connect(self._ui.actionSave.setEnabled)
 
+        self._setupEditMenu()
+        self._setupExplorer()
+        self._setupSourceToggle()
+
         defaultTextFile = QFile(":/default.md")
         defaultTextFile.open(QIODevice.OpenModeFlag.ReadOnly)
         data = defaultTextFile.readAll()
         self._ui.editor.setPlainText(data.data().decode('utf8'))
+
+        settings = QSettings()
+        self.restoreGeometry(settings.value("window/geometry", b""))
+        self.restoreState(settings.value("window/state", b""))
+        self._ui.splitter.restoreState(settings.value("window/splitter", b""))
+
+    # -- setup -------------------------------------------------------------
+
+    def _setupEditMenu(self):
+        """Edit actions act on whichever pane has focus: the source editor,
+        or the preview through its web actions."""
+        ui = self._ui
+        editor = ui.editor
+        WebAction = QWebEnginePage.WebAction
+        for action, key, editor_slot, web_action in (
+                (ui.actionUndo, QKeySequence.StandardKey.Undo, editor.undo, WebAction.Undo),
+                (ui.actionRedo, QKeySequence.StandardKey.Redo, editor.redo, WebAction.Redo),
+                (ui.actionCut, QKeySequence.StandardKey.Cut, editor.cut, WebAction.Cut),
+                (ui.actionCopy, QKeySequence.StandardKey.Copy, editor.copy, WebAction.Copy),
+                (ui.actionPaste, QKeySequence.StandardKey.Paste, editor.paste, WebAction.Paste),
+                (ui.actionSelectAll, QKeySequence.StandardKey.SelectAll, editor.selectAll,
+                 WebAction.SelectAll)):
+            action.setShortcut(key)
+            action.triggered.connect(
+                lambda checked=False, s=editor_slot, w=web_action: self._editAction(s, w))
+        editor.undoAvailable.connect(ui.actionUndo.setEnabled)
+        editor.redoAvailable.connect(ui.actionRedo.setEnabled)
+        editor.copyAvailable.connect(ui.actionCut.setEnabled)
+        editor.copyAvailable.connect(ui.actionCopy.setEnabled)
+        for action in (ui.actionUndo, ui.actionRedo, ui.actionCut, ui.actionCopy):
+            action.setEnabled(False)
+
+        ui.actionPreferences.setShortcut(QKeySequence.StandardKey.Preferences)
+        ui.actionPreferences.triggered.connect(self.onPreferences)
+
+    def _editAction(self, editor_slot, web_action):
+        preview = self._ui.preview
+        focus = self.focusWidget()
+        if focus is not None and (focus is preview or preview.isAncestorOf(focus)):
+            self._page.triggerAction(web_action)
+        else:
+            editor_slot()
+
+    def _setupExplorer(self):
+        self._explorer = FileExplorer(self)
+        self._explorer.fileActivated.connect(self.onExplorerFileActivated)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self._explorer)
+        action = self._explorer.toggleViewAction()
+        action.setText("Show &file explorer")
+        action.setToolTip("Show or hide the file explorer pane")
+        action.setShortcut("Ctrl+Shift+E")
+        self._ui.actionShowExplorer = action
+        self._ui.menu_View.insertAction(self._ui.actionShowSource, action)
+
+    def _setupSourceToggle(self):
+        ui = self._ui
+        ui.actionShowSource.toggled.connect(ui.editor.setVisible)
+        ui.actionShowSource.setChecked(self._prefs.show_source)
+        ui.editor.setVisible(self._prefs.show_source)
+
+        # The same toggles from a right-click on the preview...
+        ui.preview.addAction(ui.actionShowSource)
+        ui.preview.addAction(ui.actionShowExplorer)
+        ui.preview.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
+
+        # ...and a button in the status bar.
+        button = QToolButton(self)
+        button.setDefaultAction(ui.actionShowSource)
+        button.setText("Source")
+        button.setAutoRaise(True)
+        self.statusBar().addPermanentWidget(button)
+
+    # -- preview -----------------------------------------------------------
 
     def _loadPreview(self):
         """(Re)load the preview page so relative links resolve against the
@@ -64,8 +146,22 @@ class MainWindow(QMainWindow):
             self._ui.preview.setUrl(QUrl("qrc:/index.html"))
 
     @Slot()
+    def _applyPreviewStyle(self):
+        self._page.runJavaScript(self._prefs.image_style_script())
+
+    @Slot()
     def plainTextEditChanged(self):
         self.m_content.setText(self._ui.editor.toPlainText())
+
+    # -- files -------------------------------------------------------------
+
+    def _confirmDiscard(self, what):
+        """Ask before throwing away unsaved changes; True means go ahead."""
+        if not self.isModified():
+            return True
+        m = f"You have unsaved changes. Do you want to {what} anyway?"
+        button = QMessageBox.question(self, self.windowTitle(), m)
+        return button == QMessageBox.StandardButton.Yes
 
     @Slot(str)
     def openFile(self, path):
@@ -81,36 +177,44 @@ class MainWindow(QMainWindow):
         data = f.readAll()
         self._ui.editor.setPlainText(data.data().decode('utf8'))
         self.statusBar().showMessage(f"Opened {name}")
+        if not self._explorer.contains(path):
+            self._explorer.setRoot(QFileInfo(path).absolutePath())
+        self._explorer.select(path)
 
     def isModified(self):
         return self._ui.editor.document().isModified()
 
     @Slot()
     def onFileNew(self):
-        if self.isModified():
-            m = "You have unsaved changes. Do you want to create a new document anyway?"
-            button = QMessageBox.question(self, self.windowTitle(), m)
-            if button != QMessageBox.StandardButton.Yes:
-                return
+        if not self._confirmDiscard("create a new document"):
+            return
 
         self.m_file_path = ''
         self._ui.editor.setPlainText("## New document")
         self._ui.editor.document().setModified(False)
         self._loadPreview()
+        # A blank preview is no use; reveal the source to type into.
+        self._ui.actionShowSource.setChecked(True)
+        self._ui.editor.setFocus()
 
     @Slot()
     def onFileOpen(self):
-        if self.isModified():
-            m = "You have unsaved changes. Do you want to open a new document anyway?"
-            button = QMessageBox.question(self, self.windowTitle(), m)
-            if button != QMessageBox.StandardButton.Yes:
-                return
+        if not self._confirmDiscard("open a new document"):
+            return
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Open MarkDown File")
         dialog.setMimeTypeFilters(["text/markdown"])
         dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.openFile(dialog.selectedFiles()[0])
+
+    @Slot(str)
+    def onExplorerFileActivated(self, path):
+        if path == self.m_file_path:
+            return
+        if not self._confirmDiscard("open another document"):
+            return
+        self.openFile(path)
 
     @Slot()
     def onFileSave(self):
@@ -145,12 +249,28 @@ class MainWindow(QMainWindow):
         self.m_file_path = path
         self.onFileSave()
         self._loadPreview()
+        if not self._explorer.contains(path):
+            self._explorer.setRoot(QFileInfo(path).absolutePath())
+        self._explorer.select(path)
+
+    # -- preferences -------------------------------------------------------
+
+    @Slot()
+    def onPreferences(self):
+        dialog = PreferencesDialog(self._prefs, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        self._prefs = dialog.preferences()
+        self._prefs.save()
+        self._ui.actionShowSource.setChecked(self._prefs.show_source)
+        self._applyPreviewStyle()
 
     def closeEvent(self, event):
-        if self.isModified():
-            m = "You have unsaved changes. Do you want to exit anyway?"
-            button = QMessageBox.question(self, self.windowTitle(), m)
-            if button != QMessageBox.StandardButton.Yes:
-                event.ignore()
-            else:
-                event.accept()
+        if not self._confirmDiscard("exit"):
+            event.ignore()
+            return
+        settings = QSettings()
+        settings.setValue("window/geometry", self.saveGeometry())
+        settings.setValue("window/state", self.saveState())
+        settings.setValue("window/splitter", self._ui.splitter.saveState())
+        event.accept()

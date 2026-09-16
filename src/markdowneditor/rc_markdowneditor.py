@@ -38,7 +38,7 @@ rke.bitbucket.io\
 /markdowncss/)\x0aw\
 as created by _K\
 evin Burke_.\x0a\
-\x00\x00\x02\xbf\
+\x00\x00\x03\xbd\
 <\
 !doctype html>\x0a<\
 html lang=\x22en\x22>\x0a\
@@ -55,35 +55,51 @@ dparty/marked.js\
 cript src=\x22qrc:/\
 qtwebchannel/qwe\
 bchannel.js\x22></s\
-cript>\x0a</head>\x0a<\
-body>\x0a  <div id=\
-\x22placeholder\x22></\
-div>\x0a  <script>\x0a\
-  'use strict';\x0a\
-\x0a  var placehold\
-er = document.ge\
-tElementById('pl\
-aceholder');\x0a\x0a  \
-var updateText =\
- function(text) \
-{\x0a      placehol\
-der.innerHTML = \
-marked.parse(tex\
-t);\x0a  }\x0a\x0a  new Q\
-WebChannel(qt.we\
-bChannelTranspor\
-t,\x0a    function(\
-channel) {\x0a     \
- var content = c\
-hannel.objects.c\
-ontent;\x0a      up\
-dateText(content\
-.text);\x0a      co\
-ntent.textChange\
-d.connect(update\
-Text);\x0a    }\x0a  )\
-;\x0a  </script>\x0a</\
-body>\x0a</html>\x0a\
+cript>\x0a  <style>\
+\x0a    /* Image li\
+mits; the values\
+ are set from th\
+e Preferences di\
+alog. */\x0a    #pl\
+aceholder img {\x0a\
+      max-width:\
+ var(--img-max-w\
+idth, 100%);\x0a   \
+   max-height: v\
+ar(--img-max-hei\
+ght, 600px);\x0a   \
+   width: auto;\x0a\
+      height: au\
+to;\x0a    }\x0a  </st\
+yle>\x0a</head>\x0a<bo\
+dy>\x0a  <div id=\x22p\
+laceholder\x22></di\
+v>\x0a  <script>\x0a  \
+'use strict';\x0a\x0a \
+ var placeholder\
+ = document.getE\
+lementById('plac\
+eholder');\x0a\x0a  va\
+r updateText = f\
+unction(text) {\x0a\
+      placeholde\
+r.innerHTML = ma\
+rked.parse(text)\
+;\x0a  }\x0a\x0a  new QWe\
+bChannel(qt.webC\
+hannelTransport,\
+\x0a    function(ch\
+annel) {\x0a      v\
+ar content = cha\
+nnel.objects.con\
+tent;\x0a      upda\
+teText(content.t\
+ext);\x0a      cont\
+ent.textChanged.\
+connect(updateTe\
+xt);\x0a    }\x0a  );\x0a\
+  </script>\x0a</bo\
+dy>\x0a</html>\x0a\
 \x00\x00&\x1b\
 \x00\
 \x00\x91Dx\xda\xed=ks\xdbHr\xdf\xf5+F\
@@ -833,10 +849,10 @@ qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
 \x00\x00\x01\xa0\xa8\xbc;>\
 \x00\x00\x000\x00\x00\x00\x00\x00\x01\x00\x00\x01\xe2\
-\x00\x00\x01\xa0\xa9\x1bb\x89\
-\x00\x00\x00b\x00\x01\x00\x00\x00\x01\x00\x00*\xc4\
+\x00\x00\x01\xa0\xa9:+R\
+\x00\x00\x00b\x00\x01\x00\x00\x00\x01\x00\x00+\xc2\
 \x00\x00\x01\xa0\xa8\xbc;?\
-\x00\x00\x00J\x00\x01\x00\x00\x00\x01\x00\x00\x04\xa5\
+\x00\x00\x00J\x00\x01\x00\x00\x00\x01\x00\x00\x05\xa3\
 \x00\x00\x01\xa0\xa8\xbc;@\
 "
 
