@@ -51,7 +51,8 @@ until you ask for it, so reading is the default and editing is one keystroke awa
 | Open a file from the explorer | Double-click it (or press Enter); the tree shows folders and `*.md` / `*.markdown` files, rooted at the open document's folder |
 | Preferences | Edit › Preferences (`Ctrl+,`; on macOS under the app menu) |
 
-Preferences hold the launch state of the source pane and the maximum size images are
+Preferences hold the explorer sort order (name or date modified, either direction;
+name A to Z by default), the launch state of the source pane, and the maximum size images are
 shown at in the preview (a share of the pane width and a height in pixels; images scale
 down to fit, never up). Window layout, explorer visibility and the splitter position are
 remembered between runs in `QSettings` (`QtExamples` / `markdowneditor`).

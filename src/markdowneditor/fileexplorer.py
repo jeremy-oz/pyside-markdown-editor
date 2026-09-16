@@ -4,10 +4,27 @@ from __future__ import annotations
 
 """A dockable file tree for opening Markdown files without the dialog."""
 
-from PySide6.QtCore import QDir, QModelIndex, Signal, Slot
+from PySide6.QtCore import QDir, QModelIndex, Qt, Signal, Slot
 from PySide6.QtWidgets import QDockWidget, QFileSystemModel, QTreeView, QWidget
 
 MARKDOWN_FILTERS = ["*.md", "*.markdown"]
+
+# How the tree can be sorted, as (setting value, label, model column, order).
+# QFileSystemModel column 0 is the name and column 3 the modification time;
+# both work while the column is hidden. Folders are ordered among the files,
+# as Finder does by default; QFileSystemModel has no folders-first option and
+# a sort proxy is not worth it here.
+NAME_COLUMN = 0
+MODIFIED_COLUMN = 3
+SORT_ORDERS = (
+    ("name-asc", "Name (A to Z)", NAME_COLUMN, Qt.SortOrder.AscendingOrder),
+    ("name-desc", "Name (Z to A)", NAME_COLUMN, Qt.SortOrder.DescendingOrder),
+    ("modified-asc", "Date modified (oldest first)", MODIFIED_COLUMN,
+     Qt.SortOrder.AscendingOrder),
+    ("modified-desc", "Date modified (newest first)", MODIFIED_COLUMN,
+     Qt.SortOrder.DescendingOrder),
+)
+DEFAULT_SORT = SORT_ORDERS[0][0]
 
 
 class FileExplorer(QDockWidget):
@@ -36,12 +53,20 @@ class FileExplorer(QDockWidget):
         for column in range(1, self._model.columnCount()):
             self._tree.hideColumn(column)  # name only: no size, type, date
         self._tree.setSortingEnabled(True)
-        self._tree.sortByColumn(0, self._tree.header().sortIndicatorOrder())
         self._tree.activated.connect(self._onActivated)
         self.setWidget(self._tree)
 
         self._root = ""
+        self.setSortOrder(DEFAULT_SORT)
         self.setRoot(QDir.homePath())
+
+    def setSortOrder(self, name: str) -> None:
+        """Sort the tree by one of the SORT_ORDERS setting values."""
+        for value, _label, column, order in SORT_ORDERS:
+            if value == name:
+                self._tree.sortByColumn(column, order)
+                return
+        self.setSortOrder(DEFAULT_SORT)
 
     def root(self) -> str:
         return self._root
