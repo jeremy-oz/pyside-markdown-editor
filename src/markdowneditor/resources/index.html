@@ -2,11 +2,23 @@
 <html lang="en">
 <meta charset="utf-8">
 <head>
-  <link rel="stylesheet" type="text/css" href="qrc:/3rdparty/markdown.css">
+  <link id="theme-light" rel="stylesheet" type="text/css" href="qrc:/3rdparty/github-markdown-light.css">
+  <link id="theme-dark" rel="stylesheet" type="text/css" href="qrc:/3rdparty/github-markdown-dark.css" disabled>
   <script src="qrc:/3rdparty/marked.js"></script>
   <script src="qrc:/qtwebchannel/qwebchannel.js"></script>
   <style>
-    /* Image limits; the values are set from the Preferences dialog. */
+    /* github-markdown-css styles .markdown-body and sets no page measure,
+       so the page frame is ours. Everything scales from --base-font-size,
+       and the image limits come from the Preferences dialog. */
+    html, body { margin: 0; padding: 0; }
+    body { background-color: var(--page-background, transparent); }
+    #placeholder {
+      box-sizing: border-box;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 32px 64px;
+      font-size: var(--base-font-size, 16px);
+    }
     #placeholder img {
       max-width: var(--img-max-width, 100%);
       max-height: var(--img-max-height, 600px);
@@ -16,7 +28,7 @@
   </style>
 </head>
 <body>
-  <div id="placeholder"></div>
+  <div id="placeholder" class="markdown-body"></div>
   <script>
   'use strict';
 
@@ -24,6 +36,30 @@
 
   var updateText = function(text) {
       placeholder.innerHTML = marked.parse(text);
+  }
+
+  // Called from Python when the desktop colour scheme changes: Qt WebEngine
+  // does not pass the system scheme through to prefers-color-scheme, so the
+  // variant is chosen here rather than by a media query.
+  window.setColorScheme = function(dark) {
+      var light = document.getElementById('theme-light');
+      var night = document.getElementById('theme-dark');
+      light.disabled = dark;
+      night.disabled = !dark;
+
+      // Paint the page outside the content column in the theme's own colour.
+      var apply = function() {
+          document.documentElement.style.setProperty(
+              '--page-background', getComputedStyle(placeholder).backgroundColor);
+      };
+      var active = dark ? night : light;
+      if (active.sheet) {
+          apply();
+      } else {
+          // A disabled stylesheet is not fetched until it is enabled, so the
+          // first switch has to wait for it before reading its colours.
+          active.addEventListener('load', apply, {once: true});
+      }
   }
 
   new QWebChannel(qt.webChannelTransport,

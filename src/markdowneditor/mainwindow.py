@@ -7,6 +7,7 @@ from PySide6.QtCore import QDir, QFile, QFileInfo, QIODevice, QSettings, QUrl, Q
 from PySide6.QtGui import QFontDatabase, QKeySequence
 from PySide6.QtWebChannel import QWebChannel
 from PySide6.QtWebEngineCore import QWebEnginePage
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (QDialog, QFileDialog, QMainWindow, QMessageBox,
                                QToolButton)
 
@@ -31,6 +32,7 @@ class MainWindow(QMainWindow):
         self._page = PreviewPage(self)
         self._ui.preview.setPage(self._page)
         self._page.loadFinished.connect(self._applyPreviewStyle)
+        QGuiApplication.styleHints().colorSchemeChanged.connect(self._applyColorScheme)
 
         self._ui.editor.textChanged.connect(self.plainTextEditChanged)
 
@@ -148,7 +150,17 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _applyPreviewStyle(self):
-        self._page.runJavaScript(self._prefs.image_style_script())
+        self._page.runJavaScript(self._prefs.preview_style_script())
+        self._applyColorScheme()
+
+    @Slot()
+    def _applyColorScheme(self):
+        """Pick the light or dark stylesheet. Qt WebEngine does not pass the
+        desktop colour scheme through to prefers-color-scheme, so the page is
+        told which variant to enable."""
+        dark = QGuiApplication.styleHints().colorScheme() == Qt.ColorScheme.Dark
+        self._page.runJavaScript(
+            f"window.setColorScheme && window.setColorScheme({str(dark).lower()});")
 
     @Slot()
     def plainTextEditChanged(self):
