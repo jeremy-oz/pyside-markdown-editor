@@ -29,6 +29,18 @@ The first run downloads PySide6 (Qt WebEngine is a large wheel, allow a few minu
 
 ## Using it
 
+Give it a path to start where you work:
+
+```bash
+markdown-editor ~/work/projects/oz-trip   # browse a folder of notes
+markdown-editor notes/trip.md             # open one file
+markdown-editor                           # the example document
+```
+
+A folder roots the file explorer there and shows the pane; a file is opened, with the
+explorer rooted at its folder. A path that does not exist is an error, and `--help` and
+`--version` behave as usual. Qt's own options (`-style`, `-platform`) still work.
+
 The window opens showing the rendered preview only. The Markdown source pane is hidden
 until you ask for it, so reading is the default and editing is one keystroke away.
 
