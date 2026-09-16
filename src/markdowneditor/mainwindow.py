@@ -101,6 +101,7 @@ class MainWindow(QMainWindow):
 
     def _setupExplorer(self):
         self._explorer = FileExplorer(self)
+        self._explorer.setSortOrder(self._prefs.explorer_sort)
         self._explorer.fileActivated.connect(self.onExplorerFileActivated)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self._explorer)
         action = self._explorer.toggleViewAction()
@@ -278,6 +279,7 @@ class MainWindow(QMainWindow):
         self._prefs = dialog.preferences()
         self._prefs.save()
         self._ui.actionShowSource.setChecked(self._prefs.show_source)
+        self._explorer.setSortOrder(self._prefs.explorer_sort)
         self._applyPreviewStyle()
 
     def closeEvent(self, event):
