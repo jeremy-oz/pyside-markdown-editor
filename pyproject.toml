@@ -1,0 +1,13 @@
+[project]
+name = "pyside-markdown-editor"
+version = "0.1.0"
+description = "Markdown editor with live preview: PySide6 + Qt WebEngine, from the Qt for Python markdowneditor example"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+dependencies = [
+    "PySide6>=6.8",
+]
+
+[tool.uv]
+package = false
